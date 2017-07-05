@@ -33,9 +33,15 @@ struct _GTlsBackendSchannel
 
 static void g_tls_backend_schannel_interface_init (GTlsBackendInterface *iface);
 
+#ifdef STATIC_BUILD
+G_DEFINE_TYPE_WITH_CODE (GTlsBackendSchannel, g_tls_backend_schannel, G_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (G_TYPE_TLS_BACKEND,
+                                                g_tls_backend_schannel_interface_init))
+#else
 G_DEFINE_DYNAMIC_TYPE_EXTENDED (GTlsBackendSchannel, g_tls_backend_schannel, G_TYPE_OBJECT, 0,
                                 G_IMPLEMENT_INTERFACE_DYNAMIC (G_TYPE_TLS_BACKEND,
                                                                g_tls_backend_schannel_interface_init))
+#endif
 
 static void
 g_tls_backend_schannel_init (GTlsBackendSchannel *backend)
@@ -47,10 +53,12 @@ g_tls_backend_schannel_class_init (GTlsBackendSchannelClass *klass)
 {
 }
 
+#ifndef STATIC_BUILD
 static void
 g_tls_backend_schannel_class_finalize (GTlsBackendSchannelClass *backend_class)
 {
 }
+#endif
 
 static gboolean
 g_tls_backend_schannel_supports_tls (GTlsBackend *backend)
@@ -82,6 +90,17 @@ g_tls_backend_schannel_interface_init (GTlsBackendInterface *iface)
   iface->get_server_connection_type = g_tls_server_connection_schannel_get_type;
 }
 
+#ifdef STATIC_BUILD
+void
+g_tls_backend_schannel_register (void)
+{
+  g_io_extension_point_implement (G_TLS_BACKEND_EXTENSION_POINT_NAME,
+                                  g_tls_backend_schannel_get_type(),
+                                  "schannel",
+                                  100);
+}
+
+#else
 void
 g_tls_backend_schannel_register (GIOModule *module)
 {
@@ -93,3 +112,4 @@ g_tls_backend_schannel_register (GIOModule *module)
 
   g_type_plugin_use (g_type_get_plugin (G_TYPE_TLS_BACKEND_SCHANNEL));
 }
+#endif

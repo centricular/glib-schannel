@@ -29,7 +29,11 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GTlsBackendSchannel, g_tls_backend_schannel,
                       G, TLS_BACKEND_SCHANNEL, GObject)
 
+#ifdef STATIC_BUILD
+void g_tls_backend_schannel_register (void);
+#else
 void g_tls_backend_schannel_register (GIOModule *module);
+#endif
 
 G_END_DECLS
 

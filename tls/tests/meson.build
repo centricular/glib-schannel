@@ -12,7 +12,7 @@ foreach unit: unit_tests
   exe = executable(unit[0], unit[1],
                    dependencies: gioschannel_dep,
                    include_directories: gioschannel_inc,
-                   c_args: test_args)
+                   c_args: test_args + ['-DSTATIC_BUILD=1'])
   test(unit[0], exe,
        args: [ '--tap', '-k' ],
        env: [
