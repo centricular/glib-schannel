@@ -85,6 +85,7 @@ g_tls_schannel_certificate_flags_from_policy_status (PCERT_CHAIN_POLICY_STATUS p
     case CERT_E_UNTRUSTEDROOT:
     case CERT_E_UNTRUSTEDTESTROOT:
     case CERT_E_CHAINING:
+    case TRUST_E_CERT_SIGNATURE:
       return G_TLS_CERTIFICATE_UNKNOWN_CA;
     default:
       return G_TLS_CERTIFICATE_GENERIC_ERROR;
