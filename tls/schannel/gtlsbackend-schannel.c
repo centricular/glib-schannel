@@ -75,7 +75,15 @@ g_tls_backend_schannel_supports_dtls (GTlsBackend *backend)
 static GTlsDatabase *
 g_tls_backend_schannel_get_default_database (GTlsBackend *backend)
 {
-  return g_tls_system_database_schannel_new ();
+  G_LOCK_DEFINE_STATIC (default_database);
+  static GTlsDatabase *database = NULL;
+
+  G_LOCK (default_database);
+  if (!database)
+    database = g_tls_system_database_schannel_new ();
+  G_UNLOCK (default_database);
+
+  return g_object_ref (database);
 }
 
 static void
