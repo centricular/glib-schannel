@@ -110,6 +110,20 @@ teardown_certificate (TestCertificate *test,
 }
 
 static void
+dos2unix (gchar * data)
+{
+  gchar *r = data;
+  gchar *w = data;
+
+  while (*r != '\0') {
+    if (*r != '\r')
+      *w++ = *r;
+    r++;
+  }
+  *w = '\0';
+}
+
+static void
 test_create_pem (TestCertificate *test,
                  gconstpointer data)
 {
@@ -122,6 +136,7 @@ test_create_pem (TestCertificate *test,
   g_assert (G_IS_TLS_CERTIFICATE (cert));
 
   g_object_get (cert, "certificate-pem", &pem, NULL);
+  dos2unix (pem);
   g_assert_cmpstr (pem, ==, test->cert_pem);
   g_free (pem);
 
