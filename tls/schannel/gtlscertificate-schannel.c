@@ -247,34 +247,28 @@ g_tls_certificate_schannel_get_property (GObject * obj, guint property_id, GValu
 
   switch (property_id) {
     case PROP_CERTIFICATE: {
-      DWORD length = 0;
 
-      if (priv->cert_context && CertSerializeCertificateStoreElement (priv->cert_context, 0, NULL, &length)) {
-        GByteArray *bytes = g_byte_array_sized_new (length);
+      if (priv->cert_context) {
+        GByteArray *bytes = g_byte_array_sized_new (priv->cert_context->cbCertEncoded);
 
-        CertSerializeCertificateStoreElement (priv->cert_context, 0, bytes->data, &length);
-        g_byte_array_set_size (bytes, length);
+        g_byte_array_append (bytes, priv->cert_context->pbCertEncoded, priv->cert_context->cbCertEncoded);
+
         g_value_take_boxed (value, bytes);
       }
 
       break;
     }
     case PROP_CERTIFICATE_PEM: {
-      DWORD length = 0;
-
-      if (priv->cert_context && CertSerializeCertificateStoreElement (priv->cert_context, 0, NULL, &length)) {
-        BYTE *der = g_new (BYTE, length);
+      if (priv->cert_context) {
         DWORD pem_length = 0;
 
-        CertSerializeCertificateStoreElement (priv->cert_context, 0, der, &length);
-
-        if (CryptBinaryToString (der, length, CRYPT_STRING_BASE64HEADER, NULL, &pem_length)) {
+        if (CryptBinaryToString (priv->cert_context->pbCertEncoded, priv->cert_context->cbCertEncoded,
+                                 CRYPT_STRING_BASE64HEADER, NULL, &pem_length)) {
           gchar *pem = g_new0 (gchar, pem_length + 1);
-          CryptBinaryToString (der, length, CRYPT_STRING_BASE64HEADER, pem, &pem_length);
+          CryptBinaryToString (priv->cert_context->pbCertEncoded, priv->cert_context->cbCertEncoded,
+                               CRYPT_STRING_BASE64HEADER, pem, &pem_length);
           g_value_take_string (value, pem);
         }
-
-        g_free (der);
       }
 
       break;
