@@ -97,4 +97,5 @@ config_h_include = include_directories('.')
 
 subdir('tls/base')
 subdir('tls/schannel')
+subdir('tls/tests')
 
