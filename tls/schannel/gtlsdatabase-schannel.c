@@ -479,7 +479,7 @@ g_tls_file_database_schannel_load (GTlsFileDatabaseSchannel *schannel)
 
     if (!CertAddEncodedCertificateToStore (db_priv->cert_store,
                                            X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                                           der, length, CERT_STORE_ADD_NEW, NULL)) {
+                                           der, length, CERT_STORE_ADD_NEWER, NULL)) {
       g_warn_if_reached ();
       goto next;
     }

@@ -345,17 +345,17 @@ g_tls_certificate_schannel_verify (GTlsCertificate *cert, GSocketConnectable *id
   issuer_priv = priv;
   while (issuer_priv->issuer) {
     issuer_priv = g_tls_certificate_schannel_get_instance_private (G_TLS_CERTIFICATE_SCHANNEL (issuer_priv->issuer));
-    CertAddCertificateContextToStore (cert_store, issuer_priv->cert_context, 0, NULL);
+    CertAddCertificateContextToStore (cert_store, issuer_priv->cert_context, CERT_STORE_ADD_NEWER, NULL);
   }
 
   /* Add trusted CA, if any and all its issuer certificates to the trusted store */
   trusted_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL);
   if (trusted_ca) {
     issuer_priv = g_tls_certificate_schannel_get_instance_private (G_TLS_CERTIFICATE_SCHANNEL (trusted_ca));
-    CertAddCertificateContextToStore (trusted_store, issuer_priv->cert_context, 0, NULL);
+    CertAddCertificateContextToStore (trusted_store, issuer_priv->cert_context, CERT_STORE_ADD_NEWER, NULL);
     while (issuer_priv->issuer) {
       issuer_priv = g_tls_certificate_schannel_get_instance_private (G_TLS_CERTIFICATE_SCHANNEL (issuer_priv->issuer));
-      CertAddCertificateContextToStore (trusted_store, issuer_priv->cert_context, 0, NULL);
+      CertAddCertificateContextToStore (trusted_store, issuer_priv->cert_context, CERT_STORE_ADD_NEWER, NULL);
     }
   }
 
