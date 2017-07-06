@@ -377,7 +377,9 @@ g_tls_certificate_schannel_verify (GTlsCertificate *cert, GSocketConnectable *id
   chain_para.cbSize = sizeof (chain_para);
 
   if (!CertGetCertificateChain (engine, priv->cert_context, NULL, cert_store,
-                                &chain_para, CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT, NULL, &chain_context)) {
+                                &chain_para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
+                                             CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
+                                NULL, &chain_context)) {
     certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
     goto out;
   }

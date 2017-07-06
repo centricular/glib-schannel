@@ -61,8 +61,13 @@ g_tls_schannel_certificate_flags_from_chain (PCCERT_CHAIN_CONTEXT chain_context)
   if ((error_status & CERT_TRUST_IS_REVOKED))
     certificate_flags |= G_TLS_CERTIFICATE_REVOKED;
 
-  if (!certificate_flags && error_status)
-    certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
+  if ((error_status & CERT_TRUST_IS_NOT_SIGNATURE_VALID)) {
+    if ((error_status & CERT_TRUST_HAS_WEAK_SIGNATURE)) {
+      certificate_flags |= G_TLS_CERTIFICATE_INSECURE;
+    } else {
+      certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
+    }
+  }
 
   return certificate_flags;
 }

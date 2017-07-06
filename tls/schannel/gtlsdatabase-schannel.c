@@ -220,7 +220,9 @@ g_tls_database_schannel_verify_chain (GTlsDatabase *database, GTlsCertificate *c
   cert_context = g_tls_certificate_schannel_get_context (chain);
 
   if (!CertGetCertificateChain (priv->engine, cert_context, NULL, priv->cert_store,
-                                &chain_para, CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT, NULL, &chain_context)) {
+                                &chain_para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
+                                             CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
+                                NULL, &chain_context)) {
     /* We could check GetLastError() but that does not give us
      * anything useful we could put into the GTlsCertificateFlags */
     certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
