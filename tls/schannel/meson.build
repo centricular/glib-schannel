@@ -1,4 +1,5 @@
 tlsschannel_sources = [
+  'gtlsmodule-schannel.c',
   'gtlsbackend-schannel.c',
   'gtlsdatabase-schannel.c',
   'gtlscertificate-schannel.c',
@@ -11,7 +12,7 @@ tlsschannel_sources = [
 schannel_args = ['-DSECURITY_WIN32=1']
 
 gioschannel = shared_module('gioschannel',
-  tlsschannel_sources + ['gtlsmodule-schannel.c'],
+  tlsschannel_sources,
   dependencies: [tlsbase_dep, schannel_dep, gio, glib, gobject ],
   include_directories: config_h_include,
   install: true,
@@ -25,12 +26,13 @@ gioschannel_static = static_library('gioschannel-static',
   include_directories: config_h_include,
   install: true,
   install_dir: giomoduledir,
-  c_args: extra_args + common_flags + schannel_args + ['-DSTATIC_BUILD'],
+  c_args: extra_args + common_flags + schannel_args + ['-DG_IO_MODULE_BUILD_STATIC'],
 )
 
 gioschannel_inc = include_directories([ '.', '..' ])
 gioschannel_dep = declare_dependency(link_with: gioschannel_static,
   include_directories: [ gioschannel_inc, config_h_include ],
-  dependencies: [tlsbase_dep, schannel_dep, gio, glib, gobject ]
+  dependencies: [tlsbase_dep, schannel_dep, gio, glib, gobject ],
+  compile_args: ['-DG_IO_MODULE_BUILD_STATIC'],
 )
 

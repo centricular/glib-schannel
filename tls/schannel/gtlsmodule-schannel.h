@@ -18,23 +18,17 @@
  *
  */
 
-#ifndef __G_TLS_BACKEND_SCHANNEL_H__
-#define __G_TLS_BACKEND_SCHANNEL_H__
+#ifndef __G_TLS_MODULE_SCHANNEL_H__
+#define __G_TLS_MODULE_SCHANNEL_H__
 
 #include <gio/gio.h>
 
 G_BEGIN_DECLS
 
-#define G_TYPE_TLS_BACKEND_SCHANNEL (g_tls_backend_schannel_get_type ())
-G_DECLARE_FINAL_TYPE (GTlsBackendSchannel, g_tls_backend_schannel,
-                      G, TLS_BACKEND_SCHANNEL, GObject)
-
 #ifdef G_IO_MODULE_BUILD_STATIC
-void g_io_module_schannel_load_static (void);
-#else
-void g_tls_backend_schannel_register (GIOModule *module);
+void g_io_module_schannel_register (void);
 #endif
 
 G_END_DECLS
 
-#endif /* __G_TLS_BACKEND_SCHANNEL_H___ */
+#endif /* __G_TLS_MODULE_SCHANNEL_H___ */

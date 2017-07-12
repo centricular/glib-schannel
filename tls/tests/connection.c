@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-#include "../schannel/gtlsbackend-schannel.h"
+#include "../schannel/gtlsmodule-schannel.h"
 
 static const gchar *
 tls_test_file_path (const char *name)
@@ -1955,8 +1955,7 @@ main (int   argc,
   g_test_init (&argc, &argv, NULL);
   g_test_bug_base ("http://bugzilla.gnome.org/");
 
-  g_io_extension_point_set_required_type (g_io_extension_point_register (G_TLS_BACKEND_EXTENSION_POINT_NAME), G_TYPE_TLS_BACKEND);
-  g_tls_backend_schannel_register ();
+  g_io_module_schannel_register ();
 
   g_setenv ("GSETTINGS_BACKEND", "memory", TRUE);
 

@@ -33,7 +33,7 @@ struct _GTlsBackendSchannel
 
 static void g_tls_backend_schannel_interface_init (GTlsBackendInterface *iface);
 
-#ifdef STATIC_BUILD
+#ifdef G_IO_MODULE_BUILD_STATIC
 G_DEFINE_TYPE_WITH_CODE (GTlsBackendSchannel, g_tls_backend_schannel, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (G_TYPE_TLS_BACKEND,
                                                 g_tls_backend_schannel_interface_init))
@@ -53,7 +53,7 @@ g_tls_backend_schannel_class_init (GTlsBackendSchannelClass *klass)
 {
 }
 
-#ifndef STATIC_BUILD
+#ifndef G_IO_MODULE_BUILD_STATIC
 static void
 g_tls_backend_schannel_class_finalize (GTlsBackendSchannelClass *backend_class)
 {
@@ -98,10 +98,11 @@ g_tls_backend_schannel_interface_init (GTlsBackendInterface *iface)
   iface->get_server_connection_type = g_tls_server_connection_schannel_get_type;
 }
 
-#ifdef STATIC_BUILD
+#ifdef G_IO_MODULE_BUILD_STATIC
 void
-g_tls_backend_schannel_register (void)
+g_io_module_schannel_load_static (void)
 {
+  g_io_extension_point_set_required_type (g_io_extension_point_register (G_TLS_BACKEND_EXTENSION_POINT_NAME), G_TYPE_TLS_BACKEND);
   g_io_extension_point_implement (G_TLS_BACKEND_EXTENSION_POINT_NAME,
                                   g_tls_backend_schannel_get_type(),
                                   "schannel",
