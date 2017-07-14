@@ -41,8 +41,8 @@ typedef struct _GTlsDatabaseSchannelPrivate {
   HCERTCHAINENGINE engine;
 } GTlsDatabaseSchannelPrivate;
 
-G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GTlsDatabaseSchannel, g_tls_database_schannel, G_TYPE_TLS_DATABASE,
-                                  G_ADD_PRIVATE (GTlsDatabaseSchannel))
+G_DEFINE_TYPE_WITH_CODE (GTlsDatabaseSchannel, g_tls_database_schannel, G_TYPE_TLS_DATABASE,
+                         G_ADD_PRIVATE (GTlsDatabaseSchannel))
 
 static void
 g_tls_database_schannel_set_property (GObject * obj, guint property_id, const GValue *value, GParamSpec *pspec)
