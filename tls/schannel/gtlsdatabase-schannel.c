@@ -23,6 +23,7 @@
 #include "gtlsdatabase-schannel.h"
 #include "gtlscertificate-schannel.h"
 #include "gtlsutils-schannel.h"
+#include <wininet.h>
 
 /* mingw does not have these */
 #ifndef SECURITY_FLAG_IGNORE_CERT_CN_INVALID
@@ -202,6 +203,8 @@ g_tls_database_schannel_verify_chain (GTlsDatabase *database, GTlsCertificate *c
   GTlsDatabaseSchannel *schannel = G_TLS_DATABASE_SCHANNEL (database);
   GTlsDatabaseSchannelPrivate *priv = g_tls_database_schannel_get_instance_private (schannel);
   PCCERT_CONTEXT cert_context;
+  HCERTSTORE cert_store = NULL;
+  GTlsCertificate *issuer;
   PCCERT_CHAIN_CONTEXT chain_context;
   CERT_CHAIN_PARA chain_para;
   gchar *purposes[1] = { (gchar *) purpose };
@@ -218,6 +221,15 @@ g_tls_database_schannel_verify_chain (GTlsDatabase *database, GTlsCertificate *c
   chain_para.RequestedUsage.Usage.rgpszUsageIdentifier = purposes;
 
   cert_context = g_tls_certificate_schannel_get_context (chain);
+
+  /* Add all issuer certificates to a temporary database */
+  cert_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, 0, NULL);
+  issuer = g_tls_certificate_get_issuer (cert);
+  while (issuer) {
+    PCCERT_CONTEXT issuer_context = g_tls_certificate_schannel_get_context (issuer);
+    CertAddCertificateContextToStore (cert_store, issuer_context);
+    issuer = g_tls_certificate_get_issuer (cert);
+  }
 
   if (!CertGetCertificateChain (priv->engine, cert_context, NULL, priv->cert_store,
                                 &chain_para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
@@ -254,6 +266,44 @@ g_tls_database_schannel_verify_chain (GTlsDatabase *database, GTlsCertificate *c
 
   memset (&policy_status, 0, sizeof (policy_status));
   policy_status.cbSize = sizeof (policy_status);
+
+  /* If the certificate chain is known to be revoked or no revocation
+   * information is known whatsoever, don't check for that (again) when
+   * verifying the policy below */
+  if ((certificate_flags & G_TLS_CERTIFICATE_REVOKED) ||
+      (chain_context->TrustStatus.dwErrorStatus & CERT_TRUST_REVOCATION_STATUS_UNKNOWN) ||
+      (chain_context->TrustStatus.dwErrorStatus & CERT_TRUST_IS_OFFLINE_REVOCATION)) {
+    ssl_policy_para.fdwChecks |= SECURITY_FLAG_IGNORE_REVOCATION;
+    policy_para.dwFlags |= CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_ALL_REV_UNKNOWN_FLAGS;
+  }
+
+  /* And don't check for other things we already know have failed */
+  if ((certificate_flags & G_TLS_CERTIFICATE_EXPIRED)) {
+    LONG cmp;
+
+    ssl_policy_para.fdwChecks |= SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+    policy_para.dwFlags |= CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_NOT_TIME_NESTED_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_ALL_NOT_TIME_VALID_FLAGS;
+
+    /* Both flags are set by the code above as we don't know, so check here
+     * whether the certificate is not activated yet or expired */
+    cmp = CertVerifyTimeValidity (NULL, priv->cert_context->pCertInfo);
+    if (cmp == 1)
+      certificate_flags &= ~G_TLS_CERTIFICATE_NOT_ACTIVATED;
+    else if (cmp == -1)
+      certificate_flags &= ~G_TLS_CERTIFICATE_EXPIRED;
+    /* Otherwise it must be any of the certificates in the chain or nesting is
+     * wrong, for which we have no way of specifying that in GIO */
+  }
+
+  if ((certificate_flags & G_TLS_CERTIFICATE_UNKNOWN_CA)) {
+    ssl_policy_para.fdwChecks |= SECURITY_FLAG_IGNORE_UNKNOWN_CA;
+    policy_para.dwFlags |= CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
+  }
 
   if (!CertVerifyCertificateChainPolicy (CERT_CHAIN_POLICY_SSL, chain_context, &policy_para, &policy_status)) {
     g_free (wserver_name);

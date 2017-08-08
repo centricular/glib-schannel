@@ -411,6 +411,44 @@ g_tls_certificate_schannel_verify (GTlsCertificate *cert, GSocketConnectable *id
   memset (&policy_status, 0, sizeof (policy_status));
   policy_status.cbSize = sizeof (policy_status);
 
+  /* If the certificate chain is known to be revoked or no revocation
+   * information is known whatsoever, don't check for that (again) when
+   * verifying the policy below */
+  if ((certificate_flags & G_TLS_CERTIFICATE_REVOKED) ||
+      (chain_context->TrustStatus.dwErrorStatus & CERT_TRUST_REVOCATION_STATUS_UNKNOWN) ||
+      (chain_context->TrustStatus.dwErrorStatus & CERT_TRUST_IS_OFFLINE_REVOCATION)) {
+    ssl_policy_para.fdwChecks |= SECURITY_FLAG_IGNORE_REVOCATION;
+    policy_para.dwFlags |= CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_ALL_REV_UNKNOWN_FLAGS;
+  }
+
+  /* And don't check for other things we already know have failed */
+  if ((certificate_flags & G_TLS_CERTIFICATE_EXPIRED)) {
+    LONG cmp;
+
+    ssl_policy_para.fdwChecks |= SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+    policy_para.dwFlags |= CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_NOT_TIME_NESTED_FLAG
+                        |  CERT_CHAIN_POLICY_IGNORE_ALL_NOT_TIME_VALID_FLAGS;
+
+    /* Both flags are set by the code above as we don't know, so check here
+     * whether the certificate is not activated yet or expired */
+    cmp = CertVerifyTimeValidity (NULL, priv->cert_context->pCertInfo);
+    if (cmp == 1)
+      certificate_flags &= ~G_TLS_CERTIFICATE_NOT_ACTIVATED;
+    else if (cmp == -1)
+      certificate_flags &= ~G_TLS_CERTIFICATE_EXPIRED;
+    /* Otherwise it must be any of the certificates in the chain or nesting is
+     * wrong, for which we have no way of specifying that in GIO */
+  }
+
+  if ((certificate_flags & G_TLS_CERTIFICATE_UNKNOWN_CA)) {
+    ssl_policy_para.fdwChecks |= SECURITY_FLAG_IGNORE_UNKNOWN_CA;
+    policy_para.dwFlags |= CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
+  }
+
   if (!CertVerifyCertificateChainPolicy (CERT_CHAIN_POLICY_SSL, chain_context, &policy_para, &policy_status)) {
     certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
     goto out;

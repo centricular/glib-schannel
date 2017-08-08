@@ -69,6 +69,23 @@ g_tls_schannel_certificate_flags_from_chain (PCCERT_CHAIN_CONTEXT chain_context)
     }
   }
 
+  if ((error_status & CERT_TRUST_IS_NOT_VALID_FOR_USAGE))
+    certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
+
+  /* List based on what Chrome checks for */
+  if ((error_status & (CERT_TRUST_IS_CYCLIC |
+                       CERT_TRUST_INVALID_EXTENSION |
+                       CERT_TRUST_INVALID_POLICY_CONSTRAINTS |
+                       CERT_TRUST_INVALID_BASIC_CONSTRAINTS |
+                       CERT_TRUST_INVALID_NAME_CONSTRAINTS |
+                       CERT_TRUST_HAS_NOT_SUPPORTED_NAME_CONSTRAINT |
+                       CERT_TRUST_HAS_NOT_DEFINED_NAME_CONSTRAINT |
+                       CERT_TRUST_HAS_NOT_PERMITTED_NAME_CONSTRAINT |
+                       CERT_TRUST_HAS_EXCLUDED_NAME_CONSTRAINT |
+                       CERT_TRUST_NO_ISSUANCE_CHAIN_POLICY |
+                       CERT_TRUST_HAS_NOT_SUPPORTED_CRITICAL_EXT)))
+    certificate_flags |= G_TLS_CERTIFICATE_GENERIC_ERROR;
+
   return certificate_flags;
 }
 
