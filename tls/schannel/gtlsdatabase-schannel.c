@@ -231,7 +231,7 @@ g_tls_database_schannel_verify_chain (GTlsDatabase *database, GTlsCertificate *c
     issuer = g_tls_certificate_get_issuer (cert);
   }
 
-  if (!CertGetCertificateChain (priv->engine, cert_context, NULL, priv->cert_store,
+  if (!CertGetCertificateChain (priv->engine, cert_context, NULL, cert_store,
                                 &chain_para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
                                              CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
                                 NULL, &chain_context)) {
